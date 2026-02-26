@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "rebuild": "npm rebuild node-pty"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "express": "^4.22.1",
     "node-pty": "^1.1.0",
     "socket.io": "^4.8.3"

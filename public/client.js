@@ -43,14 +43,10 @@ window.addEventListener('resize', () => {
     });
 });
 
-// Socket communication
-term.onData(data => {
-    socket.emit('input', data);
-});
-
-socket.on('output', data => {
-    term.write(data);
-});
+let systemInfo = {
+    platform: 'Loading...',
+    hostname: 'unknown'
+};
 
 // Initial greeting (mimicking Linux login)
 function printGreeting() {
@@ -60,14 +56,28 @@ function printGreeting() {
     term.writeln('\x1b[31m | |_| |  __/ |_) | | (_| | | | |   \x1b[0m');
     term.writeln('\x1b[31m |____/ \\___|_.__/|_|\\__,_|_| |_|   \x1b[0m');
     term.writeln('');
-    term.writeln('Welcome to the Debian Linux Web Console');
-    term.writeln('System: \x1b[32m' + navigator.platform + '\x1b[0m');
+    term.writeln('Welcome to the CAS - Remote Console');
+    term.writeln('System: \x1b[32m' + systemInfo.platform + ' (' + systemInfo.hostname + ')\x1b[0m');
     term.writeln('Current time: ' + new Date().toLocaleString());
+    term.writeln('Connected via WebSocket...');
     term.writeln('');
 }
 
-// Print greeting after a short delay to ensure shell initialization doesn't clear it immediately
-setTimeout(printGreeting, 1000);
+socket.on('system-info', info => {
+    systemInfo = info;
+});
+
+// Socket communication
+term.onData(data => {
+    socket.emit('input', data);
+});
+
+socket.on('output', data => {
+    term.write(data);
+});
+
+// Print greeting after a short delay
+setTimeout(printGreeting, 500);
 
 // Initial resize to match server pty with client term
 socket.emit('resize', {
