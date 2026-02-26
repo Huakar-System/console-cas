@@ -1,0 +1,76 @@
+const socket = io();
+
+// Initialize Xterm.js
+const term = new Terminal({
+    cursorBlink: true,
+    fontFamily: '"Fira Code", monospace',
+    fontSize: 14,
+    theme: {
+        background: '#0c0c0c',
+        foreground: '#cccccc',
+        cursor: '#ffffff',
+        selection: '#ffffff4d',
+        black: '#000000',
+        red: '#e06c75',
+        green: '#98c379',
+        yellow: '#d19a66',
+        blue: '#61afef',
+        magenta: '#c678dd',
+        cyan: '#56b6c2',
+        white: '#abb2bf',
+        brightBlack: '#5c6370',
+        brightRed: '#e06c75',
+        brightGreen: '#98c379',
+        brightYellow: '#d19a66',
+        brightBlue: '#61afef',
+        brightMagenta: '#c678dd',
+        brightCyan: '#56b6c2',
+        brightWhite: '#ffffff'
+    }
+});
+
+const fitAddon = new FitAddon.FitAddon();
+term.loadAddon(fitAddon);
+term.open(document.getElementById('terminal-container'));
+fitAddon.fit();
+
+// Handle window resizing
+window.addEventListener('resize', () => {
+    fitAddon.fit();
+    socket.emit('resize', {
+        cols: term.cols,
+        rows: term.rows
+    });
+});
+
+// Socket communication
+term.onData(data => {
+    socket.emit('input', data);
+});
+
+socket.on('output', data => {
+    term.write(data);
+});
+
+// Initial greeting (mimicking Linux login)
+function printGreeting() {
+    term.writeln('\x1b[31m  ____       _     _                \x1b[0m');
+    term.writeln('\x1b[31m |  _ \\  ___| |__ (_) __ _ _ __     \x1b[0m');
+    term.writeln('\x1b[31m | | | |/ _ \\ \'_ \\| |/ _` | \'_ \\    \x1b[0m');
+    term.writeln('\x1b[31m | |_| |  __/ |_) | | (_| | | | |   \x1b[0m');
+    term.writeln('\x1b[31m |____/ \\___|_.__/|_|\\__,_|_| |_|   \x1b[0m');
+    term.writeln('');
+    term.writeln('Welcome to the Debian Linux Web Console');
+    term.writeln('System: \x1b[32m' + navigator.platform + '\x1b[0m');
+    term.writeln('Current time: ' + new Date().toLocaleString());
+    term.writeln('');
+}
+
+// Print greeting after a short delay to ensure shell initialization doesn't clear it immediately
+setTimeout(printGreeting, 1000);
+
+// Initial resize to match server pty with client term
+socket.emit('resize', {
+    cols: term.cols,
+    rows: term.rows
+});
