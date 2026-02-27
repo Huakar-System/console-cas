@@ -4,13 +4,9 @@ FROM ubuntu:22.04
 # Avoid prompts from apt
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update system and install Node.js and dependencies
+# Update system and install Node.js and basic bash
 RUN apt-get update && apt-get install -y \
     curl \
-    python3 \
-    make \
-    g++ \
-    build-essential \
     bash \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
@@ -22,7 +18,7 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (only pure JS now)
 RUN npm install
 
 # Copy the rest of the application code

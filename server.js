@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const pty = require('node-pty');
+const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 
@@ -23,58 +23,65 @@ if (os.platform() !== 'linux') {
 }
 
 io.on('connection', (socket) => {
-    console.log('User connected to terminal');
+    console.log('User connected to Ubuntu Terminal');
 
     try {
-        // Create a new pseudo-terminal for each connection
-        const ptyProcess = pty.spawn(shell, [], {
-            name: 'xterm-color',
-            cols: 80,
-            rows: 30,
+        // Spawn an interactive bash shell
+        // We use an interactive shell (-i) and tell it not to show its welcome message
+        const bash = spawn(shell, ['-i'], {
+            env: { ...process.env, TERM: 'xterm-256color' },
             cwd: os.homedir() || process.cwd(),
-            env: process.env
+            shell: true
         });
 
         // Send system info to the client
         socket.emit('system-info', {
-            platform: os.platform(),
+            platform: 'Ubuntu Linux',
             release: os.release(),
             hostname: os.hostname(),
             shell: shell
         });
 
         // Send shell output to the client
-        ptyProcess.onData((data) => {
-            socket.emit('output', data);
+        bash.stdout.on('data', (data) => {
+            socket.emit('output', data.toString());
+        });
+
+        bash.stderr.on('data', (data) => {
+            socket.emit('output', data.toString());
         });
 
         // Receive user input and send it to the shell
         socket.on('input', (data) => {
-            if (ptyProcess) ptyProcess.write(data);
-        });
-
-        // Handle terminal resizing
-        socket.on('resize', (size) => {
-            if (ptyProcess) ptyProcess.resize(size.cols, size.rows);
-        });
-
-        socket.on('disconnect', () => {
-            console.log('User disconnected, killing pty process');
-            try {
-                ptyProcess.kill();
-            } catch (e) {
-                console.error('Error killing pty process:', e);
+            if (bash && bash.stdin.writable) {
+                bash.stdin.write(data);
             }
         });
 
-        ptyProcess.onExit(({ exitCode, signal }) => {
-            console.log(`PTY process exited with code ${exitCode} and signal ${signal}`);
+        // Handle terminal resizing (simplified for child_process)
+        socket.on('resize', (size) => {
+            // child_process doesn't natively support resizing a virtual terminal window 
+            // without additional tools, but since we are replacing node-pty for ease,
+            // we will ignore this for now to keep it simple and portable.
+        });
+
+        socket.on('disconnect', () => {
+            console.log('User disconnected, killing bash process');
+            try {
+                bash.kill();
+            } catch (e) {
+                console.error('Error killing bash process:', e);
+            }
+        });
+
+        bash.on('exit', (code, signal) => {
+            console.log(`Bash process exited with code ${code} and signal ${signal}`);
             socket.disconnect();
         });
 
     } catch (err) {
-        console.error('Failed to spawn PTY process:', err);
-        socket.emit('output', '\r\n\x1b[31mError: Failed to spawn shell process. Make sure the shell is available and you have the necessary permissions.\x1b[0m\r\n');
+        console.error('Failed to spawn Bash process:', err);
+        socket.emit('output', '\r\n\x1b[31mError: Failed to spawn Ubuntu shell process.\x1b[0m\r\n');
     }
 });
 
