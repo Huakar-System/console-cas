@@ -14,8 +14,13 @@ const io = new Server(server);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Shell configuration
-// On Windows we use powershell, on Linux we try to use the user's preferred shell or bash
-const shell = os.platform() === 'win32' ? 'powershell.exe' : (process.env.SHELL || 'bash');
+const shell = 'bash';
+
+if (os.platform() !== 'linux') {
+    console.error('CRITICAL ERROR: This application is strictly designed for Ubuntu Linux.');
+    console.error('Current platform is NOT Linux. Exiting to prevent compatibility issues.');
+    process.exit(1);
+}
 
 io.on('connection', (socket) => {
     console.log('User connected to terminal');

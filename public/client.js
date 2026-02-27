@@ -48,18 +48,19 @@ let systemInfo = {
     hostname: 'unknown'
 };
 
-// Initial greeting (mimicking Linux login)
+// Initial greeting (mimicking Ubuntu login)
 function printGreeting() {
-    term.writeln('\x1b[31m  ____       _     _                \x1b[0m');
-    term.writeln('\x1b[31m |  _ \\  ___| |__ (_) __ _ _ __     \x1b[0m');
-    term.writeln('\x1b[31m | | | |/ _ \\ \'_ \\| |/ _` | \'_ \\    \x1b[0m');
-    term.writeln('\x1b[31m | |_| |  __/ |_) | | (_| | | | |   \x1b[0m');
-    term.writeln('\x1b[31m |____/ \\___|_.__/|_|\\__,_|_| |_|   \x1b[0m');
+    term.writeln('\x1b[33m _   _ _                 _         \x1b[0m');
+    term.writeln('\x1b[33m| | | | |               | |        \x1b[0m');
+    term.writeln('\x1b[33m| | | | |__  _   _ _ __ | |_ _   _ \x1b[0m');
+    term.writeln('\x1b[33m| | | | \'_ \\| | | | \'_ \\| __| | | |\x1b[0m');
+    term.writeln('\x1b[33m| |_| | |_) | |_| | | | | |_| |_| |\x1b[0m');
+    term.writeln('\x1b[33m \\___/|_.__/ \\__,_|_| |_|\\__|\\__,_|\x1b[0m');
     term.writeln('');
-    term.writeln('Welcome to the CAS - Remote Console');
+    term.writeln('Welcome to Ubuntu-focused Remote Console (CAS)');
     term.writeln('System: \x1b[32m' + systemInfo.platform + ' (' + systemInfo.hostname + ')\x1b[0m');
     term.writeln('Current time: ' + new Date().toLocaleString());
-    term.writeln('Connected via WebSocket...');
+    term.writeln('Connected via WebSocket to Ubuntu Server...');
     term.writeln('');
 }
 
