@@ -27,11 +27,16 @@ io.on('connection', (socket) => {
 
     try {
         // Spawn an interactive bash shell
-        // We use an interactive shell (-i) and tell it not to show its welcome message
+        // We use -i for interactive and set some env vars to help without a TTY
         const bash = spawn(shell, ['-i'], {
-            env: { ...process.env, TERM: 'xterm-256color' },
+            env: { 
+                ...process.env, 
+                TERM: 'vt100', // Use a simpler terminal type for better compatibility without pty
+                SUDO_ASKPASS: '/bin/false',
+                LANG: 'en_US.UTF-8'
+            },
             cwd: os.homedir() || process.cwd(),
-            shell: true
+            shell: false // Don't use system shell to wrap our bash
         });
 
         // Send system info to the client
@@ -54,15 +59,14 @@ io.on('connection', (socket) => {
         // Receive user input and send it to the shell
         socket.on('input', (data) => {
             if (bash && bash.stdin.writable) {
+                // If the user sends a carriage return, make sure it's handled for the shell
                 bash.stdin.write(data);
             }
         });
 
-        // Handle terminal resizing (simplified for child_process)
+        // Resize isn't supported without pty, so we ignore it here
         socket.on('resize', (size) => {
-            // child_process doesn't natively support resizing a virtual terminal window 
-            // without additional tools, but since we are replacing node-pty for ease,
-            // we will ignore this for now to keep it simple and portable.
+            // child_process spawn doesn't support resizing
         });
 
         socket.on('disconnect', () => {
@@ -76,6 +80,7 @@ io.on('connection', (socket) => {
 
         bash.on('exit', (code, signal) => {
             console.log(`Bash process exited with code ${code} and signal ${signal}`);
+            socket.emit('output', '\r\n\x1b[33mSession terminated.\x1b[0m\r\n');
             socket.disconnect();
         });
 
