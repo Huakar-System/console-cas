@@ -26,22 +26,20 @@ io.on('connection', (socket) => {
     console.log('User connected to Ubuntu Terminal');
 
     try {
-        // Spawn an interactive bash shell
-        // We use -i for interactive and set some env vars to help without a TTY
-        const bash = spawn(shell, ['-i'], {
+        // Use 'script' to fake a TTY so sudo and nano work correctly without node-pty
+        const bash = spawn('script', ['-qfc', 'bash -i', '/dev/null'], {
             env: { 
                 ...process.env, 
-                TERM: 'vt100', // Use a simpler terminal type for better compatibility without pty
-                SUDO_ASKPASS: '/bin/false',
+                TERM: 'xterm-256color',
                 LANG: 'en_US.UTF-8'
             },
             cwd: os.homedir() || process.cwd(),
-            shell: false // Don't use system shell to wrap our bash
+            shell: false
         });
 
         // Send system info to the client
         socket.emit('system-info', {
-            platform: 'Ubuntu Linux',
+            platform: 'Ubuntu Linux (TTY Emulated)',
             release: os.release(),
             hostname: os.hostname(),
             shell: shell
